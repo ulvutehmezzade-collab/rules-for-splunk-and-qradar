@@ -1,0 +1,112 @@
+name: Deploy SIEM Rules
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'splunk/**'
+      - 'qradar/**'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Deploy target'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - splunk
+          - qradar
+      dry_run:
+        description: 'Dry run mode'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate QRadar JSON rules
+        run: |
+          echo "Validating QRadar rule JSON files..."
+          for f in $(find qradar/rules -name "*.json" 2>/dev/null); do
+            python3 -c "import json; json.load(open('$f'))" || exit 1
+            echo "  ✓ $f"
+          done
+      
+      - name: Validate Splunk conf files
+        run: |
+          echo "Validating Splunk conf files..."
+          python3 -c "
+          import configparser, glob, sys
+          errors = 0
+          for f in glob.glob('splunk/**/*.conf', recursive=True):
+              try:
+                  c = configparser.ConfigParser(interpolation=None)
+                  c.read(f)
+                  if not c.sections():
+                      print(f'  ✗ {f} - No stanzas found')
+                      errors += 1
+                  else:
+                      print(f'  ✓ {f} ({len(c.sections())} stanzas)')
+              except Exception as e:
+                  print(f'  ✗ {f} - {e}')
+                  errors += 1
+          sys.exit(errors)
+          "
+
+  deploy-splunk:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event.inputs.target == 'all' || github.event.inputs.target == 'splunk' || github.event.inputs.target == ''
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install requests
+      
+      - name: Deploy Splunk Rules
+        env:
+          SPLUNK_URL: ${{ secrets.SPLUNK_URL }}
+          SPLUNK_TOKEN: ${{ secrets.SPLUNK_API_TOKEN }}
+        run: |
+          python3 splunk/deploy_splunk.py \
+            --url "$SPLUNK_URL" \
+            --token "$SPLUNK_TOKEN" \
+            --rules-dir ./splunk/correlation_searches \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+
+  deploy-qradar:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event.inputs.target == 'all' || github.event.inputs.target == 'qradar' || github.event.inputs.target == ''
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install requests
+      
+      - name: Deploy QRadar Rules
+        env:
+          QRADAR_URL: ${{ secrets.QRADAR_URL }}
+          QRADAR_TOKEN: ${{ secrets.QRADAR_API_TOKEN }}
+        run: |
+          python3 qradar/deploy_qradar.py \
+            --url "$QRADAR_URL" \
+            --token "$QRADAR_TOKEN" \
+            --rules-dir ./qradar/rules \
+            --full-deploy \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
