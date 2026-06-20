@@ -1,0 +1,55 @@
+{
+  "name": "OWASP_A07_Distributed_Brute_Force",
+  "type": "EVENT",
+  "enabled": true,
+  "owner": "admin",
+  "origin": "USER",
+  "identifier": "OWASP_A07_BRUTEFORCE_2025",
+  "groups": ["OWASP2025", "Authentication"],
+  "notes": "Detects distributed brute force attacks where multiple source IPs target the same account. Maps to A07:2025 and MITRE T1110.003.",
+  "tests": [
+    {
+      "group": "AND",
+      "tests": [
+        {
+          "type": "PROPERTY",
+          "property": "category",
+          "operator": "EQUALS",
+          "value": "Authentication"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "qidname",
+          "operator": "CONTAINS",
+          "value": "Login Failed"
+        },
+        {
+          "type": "SEQUENCE",
+          "sequence_tests": [
+            {
+              "description": "Same username targeted from multiple IPs",
+              "count": 15,
+              "time_window": 300,
+              "group_by": ["username"],
+              "having": {
+                "distinct_sourceip": ">= 5"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": {
+    "offense": true,
+    "offense_type": "USERNAME",
+    "severity": 8,
+    "credibility": 8,
+    "relevance": 9
+  },
+  "responses": {
+    "new_event": "OWASP A07: Distributed Brute Force Detected",
+    "offense_name": "Authentication Attack - Distributed Credential Brute Force",
+    "add_to_reference_set": "OWASP_A07_Targeted_Accounts"
+  }
+}
