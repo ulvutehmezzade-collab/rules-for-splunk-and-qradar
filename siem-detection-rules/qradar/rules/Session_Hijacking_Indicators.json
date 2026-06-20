@@ -1,0 +1,51 @@
+{
+  "name": "OWASP_A07_Session_Hijacking_Indicator",
+  "type": "EVENT",
+  "enabled": true,
+  "owner": "admin",
+  "origin": "USER",
+  "identifier": "OWASP_A07_SESSION_HIJACK_2025",
+  "groups": ["OWASP2025", "Authentication"],
+  "notes": "Detects potential session hijacking by identifying the same session used from multiple IPs or abrupt geolocation changes. MITRE: T1550.004.",
+  "tests": [
+    {
+      "group": "AND",
+      "tests": [
+        {
+          "type": "PROPERTY",
+          "property": "category",
+          "operator": "EQUALS",
+          "value": "Authentication"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "qidname",
+          "operator": "CONTAINS",
+          "value": "Session"
+        },
+        {
+          "type": "FUNCTION",
+          "function": "SAME_SESSION_MULTIPLE_IPS",
+          "parameters": {
+            "session_field": "SessionID",
+            "source_field": "sourceip",
+            "time_window": 300,
+            "min_distinct_ips": 2,
+            "exclude_networks": "RFC1918_Networks"
+          }
+        }
+      ]
+    }
+  ],
+  "actions": {
+    "offense": true,
+    "offense_type": "USERNAME",
+    "severity": 9,
+    "credibility": 7,
+    "relevance": 9
+  },
+  "responses": {
+    "new_event": "OWASP A07: Possible Session Hijacking - Multiple IPs for Same Session",
+    "offense_name": "Session Hijacking - Concurrent Session from Multiple Locations"
+  }
+}
