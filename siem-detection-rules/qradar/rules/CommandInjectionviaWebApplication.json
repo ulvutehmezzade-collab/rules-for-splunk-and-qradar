@@ -1,0 +1,58 @@
+{
+  "name": "OWASP_A05_OS_Command_Injection",
+  "type": "EVENT",
+  "enabled": true,
+  "owner": "admin",
+  "origin": "USER",
+  "identifier": "OWASP_A05_CMDI_2025",
+  "groups": ["OWASP2025", "Injection"],
+  "notes": "Detects OS command injection patterns in HTTP requests. Covers pipes, semicolons, backticks, and common shell commands. MITRE: T1190, T1059.004.",
+  "tests": [
+    {
+      "group": "AND",
+      "tests": [
+        {
+          "type": "PROPERTY",
+          "property": "category",
+          "operator": "EQUALS",
+          "value": "Application"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "URL",
+          "operator": "MATCHES",
+          "value": "(?i)([;|`$]\\s*(cat|ls|id|whoami|uname|pwd|wget|curl|nc|ncat|bash|sh|python|perl|ruby|ping|nslookup|dig)|\\$\\(|%0[aAdD]|\\x0[aAdD]|/etc/passwd|/etc/shadow|/proc/self)"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "sourceip",
+          "operator": "NOT_IN_NETWORK",
+          "value": "Internal_Security_Scanners"
+        },
+        {
+          "type": "SEQUENCE",
+          "sequence_tests": [
+            {
+              "count": 3,
+              "time_window": 60,
+              "group_by": ["sourceip"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": {
+    "offense": true,
+    "offense_type": "SOURCE_IP",
+    "severity": 10,
+    "credibility": 8,
+    "relevance": 10
+  },
+  "responses": {
+    "new_event": "OWASP A05: OS Command Injection Attempt",
+    "offense_name": "Critical Injection - OS Command Injection",
+    "add_to_reference_set": "OWASP_A05_Attacker_IPs",
+    "execute_custom_action": "block_ip_firewall"
+  }
+}
