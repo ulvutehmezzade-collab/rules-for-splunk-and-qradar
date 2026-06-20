@@ -1,0 +1,70 @@
+{
+  "name": "OWASP_A10_Application_Crash_Storm",
+  "type": "EVENT",
+  "enabled": true,
+  "owner": "admin",
+  "origin": "USER",
+  "identifier": "OWASP_A10_CRASH_STORM_2025",
+  "groups": ["OWASP2025", "ExceptionalConditions"],
+  "notes": "Detects rapid application crashes or unhandled exceptions from a single source, indicating potential exploitation of exception handling weaknesses. MITRE: T1499.004, T1190.",
+  "tests": [
+    {
+      "group": "AND",
+      "tests": [
+        {
+          "type": "PROPERTY",
+          "property": "category",
+          "operator": "EQUALS",
+          "value": "Application"
+        },
+        {
+          "type": "OR_GROUP",
+          "tests": [
+            {
+              "type": "PROPERTY",
+              "property": "qidname",
+              "operator": "MATCHES",
+              "value": "(?i)(unhandled.exception|application.crash|fatal.error|segmentation.fault|out.of.memory|stack.overflow)"
+            },
+            {
+              "type": "PROPERTY",
+              "property": "HTTPResponseCode",
+              "operator": "MATCHES",
+              "value": "50[0-4]"
+            }
+          ]
+        },
+        {
+          "type": "SEQUENCE",
+          "sequence_tests": [
+            {
+              "description": "High rate of 5xx errors from single source",
+              "count": 20,
+              "time_window": 60,
+              "group_by": ["sourceip", "destinationip"]
+            }
+          ]
+        },
+        {
+          "type": "PROPERTY",
+          "property": "sourceip",
+          "operator": "NOT_IN_NETWORK",
+          "value": "Internal_Monitoring_Tools"
+        }
+      ]
+    }
+  ],
+  "actions": {
+    "offense": true,
+    "offense_type": "SOURCE_IP",
+    "severity": 7,
+    "credibility": 7,
+    "relevance": 8
+  },
+  "responses": {
+    "new_event": "OWASP A10: Application Crash Storm from External Source",
+    "offense_name": "Exceptional Condition Exploitation - Application Crash Storm",
+    "add_to_reference_set": "OWASP_A10_Crash_Sources",
+    "execute_custom_action": "rate_limit_source_ip"
+  }
+}
