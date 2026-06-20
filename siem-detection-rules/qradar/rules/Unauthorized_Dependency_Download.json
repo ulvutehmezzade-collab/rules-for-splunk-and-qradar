@@ -1,0 +1,59 @@
+{
+  "name": "OWASP_A03_Unauthorized_Package_Download",
+  "type": "EVENT",
+  "enabled": true,
+  "owner": "admin",
+  "origin": "USER",
+  "identifier": "OWASP_A03_SUPPLY_CHAIN_2025",
+  "groups": ["OWASP2025", "SupplyChain"],
+  "notes": "Detects downloads from package registries (npm, pypi, rubygems) by production servers that should not install packages at runtime. MITRE: T1195.002.",
+  "tests": [
+    {
+      "group": "AND",
+      "tests": [
+        {
+          "type": "PROPERTY",
+          "property": "category",
+          "operator": "EQUALS",
+          "value": "Firewall Permit"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "destinationip",
+          "operator": "IN_REFERENCE_SET",
+          "value": "Package_Registry_IPs"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "sourceip",
+          "operator": "IN_NETWORK",
+          "value": "Production_Servers"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "destinationport",
+          "operator": "EQUALS",
+          "value": "443"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "URL",
+          "operator": "MATCHES",
+          "value": "(?i)(registry\\.npmjs\\.org|pypi\\.org|rubygems\\.org|packages\\.nuget\\.org)"
+        }
+      ]
+    }
+  ],
+  "actions": {
+    "offense": true,
+    "offense_type": "SOURCE_IP",
+    "severity": 8,
+    "credibility": 7,
+    "relevance": 9
+  },
+  "responses": {
+    "new_event": "OWASP A03: Production Server Downloading External Packages",
+    "offense_name": "Supply Chain Risk - Unauthorized Package Download",
+    "add_to_reference_set": "OWASP_A03_Supply_Chain_Alerts"
+  }
+}
