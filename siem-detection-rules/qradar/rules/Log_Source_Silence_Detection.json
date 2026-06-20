@@ -1,0 +1,49 @@
+{
+  "name": "OWASP_A09_Critical_Log_Source_Silence",
+  "type": "EVENT",
+  "enabled": true,
+  "owner": "admin",
+  "origin": "USER",
+  "identifier": "OWASP_A09_LOG_SILENCE_2025",
+  "groups": ["OWASP2025", "Logging"],
+  "notes": "Triggers when a critical log source stops sending events unexpectedly, indicating potential tampering or failure. Maps to A09:2025 and MITRE T1562.002.",
+  "tests": [
+    {
+      "group": "AND",
+      "tests": [
+        {
+          "type": "LOG_SOURCE_INACTIVITY",
+          "parameters": {
+            "log_source_group": "Critical_Assets",
+            "inactivity_threshold_minutes": 15,
+            "exclude_maintenance_windows": true
+          }
+        },
+        {
+          "type": "NOT",
+          "tests": [
+            {
+              "type": "PROPERTY",
+              "property": "qidname",
+              "operator": "CONTAINS",
+              "value": "Planned Maintenance"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": {
+    "offense": true,
+    "offense_type": "LOG_SOURCE",
+    "severity": 7,
+    "credibility": 8,
+    "relevance": 9
+  },
+  "responses": {
+    "new_event": "OWASP A09: Critical Log Source Stopped Sending Events",
+    "offense_name": "Logging Failure - Critical Asset Silent",
+    "email": true,
+    "email_recipients": "soc-alerts@company.com"
+  }
+}
