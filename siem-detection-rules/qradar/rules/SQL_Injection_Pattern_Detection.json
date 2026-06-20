@@ -1,0 +1,63 @@
+{
+  "name": "OWASP_A05_SQL_Injection_Detection",
+  "type": "EVENT",
+  "enabled": true,
+  "owner": "admin",
+  "origin": "USER",
+  "identifier": "OWASP_A05_SQLI_2025",
+  "groups": ["OWASP2025", "Injection"],
+  "notes": "Detects SQL injection patterns in web requests including UNION, time-based blind, and error-based techniques. MITRE: T1190.",
+  "tests": [
+    {
+      "group": "AND",
+      "tests": [
+        {
+          "type": "PROPERTY",
+          "property": "category",
+          "operator": "EQUALS",
+          "value": "Application"
+        },
+        {
+          "type": "OR_GROUP",
+          "tests": [
+            {
+              "type": "PROPERTY",
+              "property": "URL",
+              "operator": "MATCHES",
+              "value": "(?i)(union\\s+(all\\s+)?select|;\\s*(drop|alter|insert|update|delete|exec)|benchmark\\s*\\(|sleep\\s*\\(|waitfor\\s+delay|load_file|into\\s+(out|dump)file|information_schema|CONVERT\\s*\\(|CAST\\s*\\()"
+            },
+            {
+              "type": "PROPERTY",
+              "property": "payload",
+              "operator": "MATCHES",
+              "value": "(?i)(('|%27)\\s*(or|and)\\s*('|%27|\\d|true|false)|1\\s*=\\s*1|'\\s*--)"
+            }
+          ]
+        },
+        {
+          "type": "SEQUENCE",
+          "sequence_tests": [
+            {
+              "count": 5,
+              "time_window": 120,
+              "group_by": ["sourceip"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": {
+    "offense": true,
+    "offense_type": "SOURCE_IP",
+    "severity": 9,
+    "credibility": 9,
+    "relevance": 10
+  },
+  "responses": {
+    "new_event": "OWASP A05: SQL Injection Attack Detected",
+    "offense_name": "Injection Attack - SQL Injection Exploitation",
+    "add_to_reference_set": "OWASP_A05_Attacker_IPs",
+    "execute_custom_action": "block_ip_firewall"
+  }
+}
