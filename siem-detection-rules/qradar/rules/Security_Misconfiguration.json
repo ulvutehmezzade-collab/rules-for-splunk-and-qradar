@@ -1,0 +1,62 @@
+{
+  "name": "OWASP_A02_Verbose_Error_Disclosure",
+  "type": "EVENT",
+  "enabled": true,
+  "owner": "admin",
+  "origin": "USER",
+  "identifier": "OWASP_A02_ERROR_DISCLOSURE_2025",
+  "groups": ["OWASP2025", "Misconfiguration"],
+  "notes": "Detects HTTP 500 responses containing stack traces or debug info exposed to external users. Maps to A02:2025. MITRE: T1082.",
+  "tests": [
+    {
+      "group": "AND",
+      "tests": [
+        {
+          "type": "PROPERTY",
+          "property": "category",
+          "operator": "EQUALS",
+          "value": "Application"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "HTTPResponseCode",
+          "operator": "GREATER_THAN_OR_EQUALS",
+          "value": "500"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "payload",
+          "operator": "MATCHES",
+          "value": "(?i)(stack\\s*trace|exception|SQLSTATE|NullPointer|Traceback|at\\s+\\w+\\.\\w+\\(|System\\.Exception|ORA-\\d+)"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "sourceip",
+          "operator": "NOT_IN_NETWORK",
+          "value": "RFC1918_Networks"
+        },
+        {
+          "type": "SEQUENCE",
+          "sequence_tests": [
+            {
+              "count": 5,
+              "time_window": 300,
+              "group_by": ["destinationip"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": {
+    "offense": true,
+    "offense_type": "DESTINATION_IP",
+    "severity": 6,
+    "credibility": 9,
+    "relevance": 8
+  },
+  "responses": {
+    "new_event": "OWASP A02: Verbose Error Exposure to External Client",
+    "offense_name": "Security Misconfiguration - Debug Info Leaked"
+  }
+}
