@@ -1,0 +1,48 @@
+{
+  "name": "OWASP_A01_SSRF_Internal_Network_Probe",
+  "type": "EVENT",
+  "enabled": true,
+  "owner": "admin",
+  "origin": "USER",
+  "identifier": "OWASP_A01_SSRF_2025",
+  "groups": ["OWASP2025", "AccessControl", "SSRF"],
+  "notes": "Detects server-side requests targeting internal/metadata endpoints. SSRF merged into A01 per OWASP 2025. MITRE: T1190, T1018.",
+  "tests": [
+    {
+      "group": "AND",
+      "tests": [
+        {
+          "type": "PROPERTY",
+          "property": "category",
+          "operator": "EQUALS",
+          "value": "Application"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "URL",
+          "operator": "MATCHES",
+          "value": "(?i)(url|uri|path|dest|redirect|target|fetch|proxy|request)=(https?://)?(127\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.|169\\.254\\.|0\\.0\\.0\\.0|localhost|metadata\\.google|metadata\\.aws)"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "eventDirection",
+          "operator": "EQUALS",
+          "value": "L2L"
+        }
+      ]
+    }
+  ],
+  "actions": {
+    "offense": true,
+    "offense_type": "SOURCE_IP",
+    "severity": 9,
+    "credibility": 8,
+    "relevance": 10
+  },
+  "responses": {
+    "new_event": "OWASP A01: SSRF - Internal Network Probe Detected",
+    "offense_name": "SSRF Attack - Internal Resource Access Attempt",
+    "add_to_reference_set": "OWASP_SSRF_Indicators",
+    "annotate": true
+  }
+}
