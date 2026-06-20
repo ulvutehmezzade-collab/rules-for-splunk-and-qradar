@@ -1,0 +1,67 @@
+{
+  "name": "OWASP_A01_Unauthorized_Resource_Access_IDOR",
+  "type": "EVENT",
+  "enabled": true,
+  "owner": "admin",
+  "origin": "USER",
+  "base_capacity": 0,
+  "average_capacity": 0,
+  "base_host_id": 0,
+  "identifier": "OWASP_A01_IDOR_2025",
+  "linked_rule_identifier": "",
+  "creation_date": 1718841600000,
+  "modification_date": 1718841600000,
+  "groups": ["OWASP2025", "AccessControl"],
+  "notes": "Detects potential IDOR attacks where users access resources beyond their authorization scope. Maps to OWASP A01:2025 and MITRE ATT&CK T1078.",
+  "tests": [
+    {
+      "group": "AND",
+      "tests": [
+        {
+          "type": "PROPERTY",
+          "property": "category",
+          "operator": "EQUALS",
+          "value": "Access"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "qidname",
+          "operator": "CONTAINS",
+          "value": "HTTP Response"
+        },
+        {
+          "type": "PROPERTY",
+          "property": "URL",
+          "operator": "MATCHES",
+          "value": "(?i)/api/(users|accounts|profiles|orders|documents)/[0-9a-f\\-]+"
+        },
+        {
+          "type": "SEQUENCE",
+          "sequence_tests": [
+            {
+              "description": "Multiple different resource IDs accessed rapidly",
+              "count": 10,
+              "time_window": 60,
+              "group_by": ["sourceip"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": {
+    "offense": true,
+    "offense_type": "SOURCE_IP",
+    "severity": 7,
+    "credibility": 8,
+    "relevance": 9
+  },
+  "responses": {
+    "new_event": "OWASP A01: Potential IDOR - Unauthorized Resource Access",
+    "offense_name": "Broken Access Control - IDOR Exploitation Attempt",
+    "add_to_reference_set": "OWASP_A01_Suspicious_IPs",
+    "annotate": true,
+    "email": false,
+    "syslog_forward": true
+  }
+}
